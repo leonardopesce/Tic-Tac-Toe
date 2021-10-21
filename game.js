@@ -78,9 +78,9 @@ $('.grid').on('click', (e) => {
 
         //check if playerX wins
         if(doesPlayerWins("x")) {
-            $('.header').text('Player One Wins!');
+            $('.header').text('Player Wins!');
             $('.header').css('color', 'tomato');
-            $('.p1').text ('Player 1: '+ p1Counter);
+            $('.p1').text ('Player: '+ p1Counter);
             p1Counter += 1;
             player1.win = true;
         }
@@ -91,10 +91,9 @@ $('.grid').on('click', (e) => {
 
         // check if player 2 wins
         if(doesPlayerWins("o")) {
-            console.log("0 wins")
-            $('.header').text('AI Wins!');
+            $('.header').text('Bot Wins!');
             $('.header').css('color', '#33DBFF');
-            $('.p2').text ('Player 2: ' + p2Counter);
+            $('.p2').text ('Bot: ' + p2Counter);
             p2Counter += 1;
             player2.win = true;
         }
