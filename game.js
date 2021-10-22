@@ -4,6 +4,19 @@ let board = [
     7,8,9
 ];
 
+let pl = "x";
+let bt = "o";
+
+let sides = [
+    0,1,2,
+    3,5,
+    6,7,8
+];
+
+let corners = [0,2,6,8];
+
+let edges = [1,3,5,7];
+
 let lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -24,6 +37,34 @@ class Player {
     constructor() {
         this.isTurn = false;
         this.win = false;
+    }
+}
+
+class Node{
+    constructor(board, placed, player) {
+        this.board = board;
+        this.placed = placed;
+        this.player = player;
+        this.value = -2;
+
+    }
+
+    isEmpty(x){
+        if(this.board[x] !== pl && this.board[x] !== bt){
+            return true;
+        }
+        return false;
+    }
+
+    notPlayer(){
+        return notPlayer(this.player);
+    }
+}
+
+class Tree{
+    constructor() {
+        this.value = -2;
+        this.pos = -1;
     }
 }
 
@@ -77,7 +118,7 @@ $('.grid').on('click', (e) => {
 
 
         //check if playerX wins
-        if(doesPlayerWins("x")) {
+        if(doesPlayerWins(pl, board)) {
             $('.header').text('Player Wins!');
             $('.header').css('color', 'tomato');
             $('.p1').text ('Player: '+ p1Counter);
@@ -90,7 +131,7 @@ $('.grid').on('click', (e) => {
 
 
         // check if player 2 wins
-        if(doesPlayerWins("o")) {
+        if(doesPlayerWins(bt, board)) {
             $('.header').text('Bot Wins!');
             $('.header').css('color', '#33DBFF');
             $('.p2').text ('Bot: ' + p2Counter);
@@ -102,77 +143,157 @@ $('.grid').on('click', (e) => {
 
 function botPlay(){
     if(placed < 9) {
-        if (!botWinningMove()) {
-            if (!botBlockingMove()) {
-                if (!botCenterMove()) {
-                    let pos = getRandomInt(8);
-                    while (board[pos] === "x" || board[pos] === "o") {
-                        pos = getRandomInt(8);
-                    }
-                    console.log("placing at random " + pos);
-                    botPlaceo(pos);
+        let pos = playerWinningMove(board.slice(), bt);
+        if (pos === -1) {
+            pos = playerBlockingMove(board.slice(), bt);
+            if (pos === -1) {
+                pos = botCenterMove();
+                if (pos === -1) {
+                    console.log("alpha beta pruning");
+                    pos = alphaBetaPruning(board);
                 }
+            }
+        }
+        botPlaceo(pos);
+    }
+}
+
+function alphaBetaPruning(tBoard){
+    let tree = new Tree();
+    for(let i = 0; i < sides.length; i++){
+        let tempBoard = tBoard.slice();
+        if(tempBoard[sides[i]] !== bt && tempBoard[sides[i]] !== pl){
+            console.log("found a empty space");
+            tempBoard[sides[i]] = bt;
+            let tempNodeValue = minMaxNode(new Node(tempBoard, placed + 1, pl), -2, 2);
+            if(tree.value === -2){
+                tree.value = tempNodeValue;
+                tree.pos = sides[i];
+            }
+            else if(tree.value < tempNodeValue){
+                tree.value = tempNodeValue;
+                tree.pos = sides[i];
+
+            }
+            //console.log("side " + sides[i] + " value " + tree.value + " tempNodeValue " + tempNodeValue);
+            if(tree.value === 1){
+                return tree.pos;
+            }
+        }
+
+    }
+    return tree.pos;
+}
+
+function minMaxNode(node, alpha, beta){
+    if(node.placed === 9){
+        //console.log("win " + node.value);
+        return whoWins(node.board);
+    }
+
+    if(node.player === pl){
+        let minEval = 2;
+        for(let k = 0; k < sides.length; k++){
+           if(node.isEmpty(sides[k])){
+                minEval = Math.min(
+                    minEval,
+                    minMaxNode(new Node(node.board.slice(), node.placed + 1, node.notPlayer()), alpha, beta)
+                );
+                beta = Math.min(beta, minEval);
+                if(beta <= alpha){
+                    break;
+                }
+                return minEval;
+           }
+        }
+    }
+    else if(node.player === bt){
+        let maxEval = -2;
+        for(let k = 0; k < sides.length; k++) {
+            if (node.isEmpty(sides[k])) {
+                maxEval = Math.max(
+                    maxEval,
+                    minMaxNode(new Node(node.board.slice(), node.placed + 1, node.notPlayer()), alpha, beta)
+                );
+                alpha = Math.max(alpha, maxEval);
+                if (beta <= alpha) {
+                    break;
+                }
+                return maxEval;
             }
         }
     }
 }
 
-function botCenterMove(){
-    if(board[4] !== "o" && board[4] !== "x"){
-        console.log("center move")
-        botPlaceo(4);
-        return true;
+
+function notPlayer(player){
+    if(player === pl){
+        return bt;
     }
-    return false;
+    else{
+        return pl;
+    }
 }
 
-function botBlockingMove(){
+function whoWins(tBoard){
+    if(doesPlayerWins(pl, tBoard)){
+        return -1;
+    }
+    else if(doesPlayerWins(bt, tBoard)){
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+function botCenterMove(){
+    if(board[4] !== bt && board[4] !== pl){
+        return 4;
+    }
+    return -1;
+}
+
+function playerBlockingMove(tBoard, player){
     for(let k = 0; k < lines.length; k++){
         let ln = lines[k];
         let x = 0;
         let emptyPos = -1;
         for(let i = 0; i < 3; i++){
-            if(board[ln[i]] === "x"){
+            if(tBoard[ln[i]] === notPlayer(player)){
                 x++;
             }
-            else if(board[ln[i]] !== "o"){
+            else if(tBoard[ln[i]] !== player){
                 emptyPos = ln[i];
             }
         }
         if(x === 2 && emptyPos !== -1){
-            console.log("block pos " + emptyPos);
-            botPlaceo(emptyPos);
-            return true;
+            return emptyPos;
         }
     }
-
-
-    return false;
+    return -1;
 }
 
-
-function botWinningMove(){
+function playerWinningMove(tBoard, player){
     for(let k = 0; k < lines.length; k++){
         let ln = lines[k];
         let o = 0;
         let emptyPos = -1;
-        console.log(ln);
+
         for(let i = 0; i < 3; i++){
 
-            if(board[ln[i]] === "o"){
+            if(tBoard[ln[i]] === player){
                 o++;
             }
-            else if(board[ln[i]] !== "x"){
+            else if(tBoard[ln[i]] !== notPlayer(player)){
                 emptyPos = ln[i];
             }
         }
         if(o === 2 && emptyPos !== -1){
-            console.log("win pos " + emptyPos);
-            botPlaceo(emptyPos);
-            return true;
+            return emptyPos;
         }
     }
-    return false;
+    return -1;
 }
 
 function botPlaceo(pos){
@@ -185,10 +306,10 @@ function botPlaceo(pos){
 }
 
 
-function doesPlayerWins(player){
+function doesPlayerWins(player, tBoard){
     for(let k = 0; k < lines.length; k++){
         let ln = lines[k];
-        if(board[ln[0]] === player && board[ln[1]] === player && board[ln[2]] === player){
+        if(tBoard[ln[0]] === player && tBoard[ln[1]] === player && tBoard[ln[2]] === player){
             return true;
         }
     }
