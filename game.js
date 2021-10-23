@@ -6,6 +6,9 @@ let board = [
 
 let pl = "x";
 let bt = "o";
+let WIN = 1000;
+let LOSS = -1000;
+let DRAW = 0;
 
 let sides = [
     0,1,2,
@@ -45,8 +48,6 @@ class Node{
         this.board = board;
         this.placed = placed;
         this.player = player;
-        this.value = -2;
-
     }
 
     isEmpty(x){
@@ -61,12 +62,6 @@ class Node{
     }
 }
 
-class Tree{
-    constructor() {
-        this.value = -2;
-        this.pos = -1;
-    }
-}
 
 class Space {
     constructor(id) {
@@ -150,7 +145,7 @@ function botPlay(){
                 pos = botCenterMove();
                 if (pos === -1) {
                     console.log("alpha beta pruning");
-                    pos = alphaBetaPruning(board);
+                    pos = alphaBeta(new Node(board.slice(), placed, bt), -Infinity, Infinity)[1];
                 }
             }
         }
@@ -158,71 +153,46 @@ function botPlay(){
     }
 }
 
-function alphaBetaPruning(tBoard){
-    let tree = new Tree();
-    for(let i = 0; i < sides.length; i++){
-        let tempBoard = tBoard.slice();
-        if(tempBoard[sides[i]] !== bt && tempBoard[sides[i]] !== pl){
-            console.log("found a empty space");
-            tempBoard[sides[i]] = bt;
-            let tempNodeValue = minMaxNode(new Node(tempBoard, placed + 1, pl), -2, 2);
-            if(tree.value === -2){
-                tree.value = tempNodeValue;
-                tree.pos = sides[i];
-            }
-            else if(tree.value < tempNodeValue){
-                tree.value = tempNodeValue;
-                tree.pos = sides[i];
-
-            }
-            //console.log("side " + sides[i] + " value " + tree.value + " tempNodeValue " + tempNodeValue);
-            if(tree.value === 1){
-                return tree.pos;
-            }
-        }
-
-    }
-    return tree.pos;
-}
-
-function minMaxNode(node, alpha, beta){
-    if(node.placed === 9){
-        //console.log("win " + node.value);
-        return whoWins(node.board);
+function alphaBeta(node, alpha, beta) {
+    let bestMove = -1
+    let bestScore = node.player === bt ? LOSS : WIN;
+    if (node.placed === 9 || whoWins(node.board) !== DRAW) {
+        return [whoWins(node.board), bestMove];
     }
 
-    if(node.player === pl){
-        let minEval = 2;
-        for(let k = 0; k < sides.length; k++){
-           if(node.isEmpty(sides[k])){
-                minEval = Math.min(
-                    minEval,
-                    minMaxNode(new Node(node.board.slice(), node.placed + 1, node.notPlayer()), alpha, beta)
-                );
-                beta = Math.min(beta, minEval);
-                if(beta <= alpha){
-                    break;
+
+    for (let k = 0; k < sides.length; k++) {
+        if (node.isEmpty(sides[k])) {
+            let tBoard = node.board.slice();
+            tBoard[sides[k]] = node.player;
+            let res = alphaBeta(new Node(tBoard, node.placed + 1, node.notPlayer()), alpha, beta)[0];
+
+            if (node.player === bt) {
+                if (bestScore < res) {
+                    bestMove = sides[k];
+                    bestScore = res - node.placed * 10;
+
+                    alpha = Math.max(alpha, bestScore);
+                    if (alpha >= beta) {
+                        break;
+                    }
                 }
-                return minEval;
-           }
-        }
-    }
-    else if(node.player === bt){
-        let maxEval = -2;
-        for(let k = 0; k < sides.length; k++) {
-            if (node.isEmpty(sides[k])) {
-                maxEval = Math.max(
-                    maxEval,
-                    minMaxNode(new Node(node.board.slice(), node.placed + 1, node.notPlayer()), alpha, beta)
-                );
-                alpha = Math.max(alpha, maxEval);
-                if (beta <= alpha) {
-                    break;
+            }
+            else{
+                if (bestScore > res) {
+                    bestMove = sides[k];
+                    bestScore = res + node.placed * 10;
+
+                    beta = Math.max(beta, bestScore);
+                    if (alpha >= beta) {
+                        break;
+                    }
                 }
-                return maxEval;
             }
         }
     }
+
+    return [bestScore, bestMove];
 }
 
 
@@ -237,13 +207,13 @@ function notPlayer(player){
 
 function whoWins(tBoard){
     if(doesPlayerWins(pl, tBoard)){
-        return -1;
+        return LOSS;
     }
     else if(doesPlayerWins(bt, tBoard)){
-        return 1;
+        return WIN;
     }
     else {
-        return 0;
+        return DRAW;
     }
 }
 
