@@ -6,19 +6,15 @@ let board = [
 
 let pl = "x";
 let bt = "o";
-let WIN = 1000;
-let LOSS = -1000;
+let WIN = 1;
+let LOSS = -1;
 let DRAW = 0;
 
 let sides = [
     0,1,2,
-    3,5,
+    3,  5,
     6,7,8
 ];
-
-let corners = [0,2,6,8];
-
-let edges = [1,3,5,7];
 
 let lines = [
     [0, 1, 2],
@@ -51,10 +47,7 @@ class Node{
     }
 
     isEmpty(x){
-        if(this.board[x] !== pl && this.board[x] !== bt){
-            return true;
-        }
-        return false;
+        return this.board[x] !== pl && this.board[x] !== bt;
     }
 
     notPlayer(){
@@ -144,12 +137,11 @@ function botPlay(){
             if (pos === -1) {
                 pos = botCenterMove();
                 if (pos === -1) {
-                    console.log("alpha beta pruning");
                     pos = alphaBeta(new Node(board.slice(), placed, bt), -Infinity, Infinity)[1];
                 }
             }
         }
-        botPlaceo(pos);
+        botPlaceO(pos);
     }
 }
 
@@ -170,7 +162,7 @@ function alphaBeta(node, alpha, beta) {
             if (node.player === bt) {
                 if (bestScore < res) {
                     bestMove = sides[k];
-                    bestScore = res - node.placed * 10;
+                    bestScore = res;
 
                     alpha = Math.max(alpha, bestScore);
                     if (alpha >= beta) {
@@ -181,7 +173,7 @@ function alphaBeta(node, alpha, beta) {
             else{
                 if (bestScore > res) {
                     bestMove = sides[k];
-                    bestScore = res + node.placed * 10;
+                    bestScore = res;
 
                     beta = Math.max(beta, bestScore);
                     if (alpha >= beta) {
@@ -266,7 +258,7 @@ function playerWinningMove(tBoard, player){
     return -1;
 }
 
-function botPlaceo(pos){
+function botPlaceO(pos){
     spaces[pos].addSymbolO(document.getElementById(spaces[pos].id));
     board[pos] = 'o';
     switchTurns(player1, player2);
@@ -286,10 +278,6 @@ function doesPlayerWins(player, tBoard){
     return false;
 }
 
-
-function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
-}
 
 $('.reset').on('click', () => {
     player1.isTurn = true;
