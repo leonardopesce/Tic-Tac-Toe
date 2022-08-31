@@ -61,6 +61,7 @@ body {
     background-color: white;
     border: 1px solid tomato;
     padding: 5px;
+    margin:10px;
     transition: border, color, .5s;
 }
 
@@ -72,6 +73,30 @@ body {
 }
 
 .reset:focus {
+    outline: none;
+}
+
+.gohome {
+    font-size: 20px;
+    font-family: 'IBM Plex Sans Condensed', sans-serif;
+    font-family: 'Montserrat', sans-serif;
+    color: #33DBFF;
+    background-color: white;
+    border: 1px solid #33DBFF;
+    padding: 5px;
+    margin:10px;
+    transition: border, color, .5s;
+    text-decoration:none;
+}
+
+.gohome:hover {
+    cursor: pointer;
+    color: tomato;
+    border: 1px solid tomato;
+    transition: border, color, .5s;
+}
+
+.gohome:focus {
     outline: none;
 }
 
